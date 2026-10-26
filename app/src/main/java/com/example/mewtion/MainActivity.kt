@@ -10,6 +10,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,8 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.net.Inet4Address
+import java.net.NetworkInterface
 
 class MainActivity : ComponentActivity() {
 
@@ -42,6 +47,8 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color(0xFF0F1115) // Deep dark mode background
                 ) {
+                    val ipAddress by remember { mutableStateOf(getDeviceIpAddress()) }
+
                     // Infinite subtle pulsing animation for visual feedback
                     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
                     val scale by infiniteTransition.animateFloat(
@@ -74,20 +81,66 @@ class MainActivity : ComponentActivity() {
                         Text(
                             text = "Mewtion Bridge Active",
                             color = Color.White,
-                            fontSize = 20.sp
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold
                         )
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Device IP Address card
+                        Surface(
+                            color = Color(0xFF1E222B),
+                            shape = RectangleShape
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(vertical = 12.dp, horizontal = 24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Device IP Address",
+                                    color = Color.Gray,
+                                    fontSize = 12.sp
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "$ipAddress:8765",
+                                    color = Color(0xFF50C878),
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "Streaming sensor data over USB (Port 8765).\nYou can safely minimize or lock your phone.",
+                            text = "Streaming sensor data over TCP (Port 8765).\nYou can safely minimize or lock your phone.",
                             color = Color.Gray,
                             fontSize = 14.sp,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            textAlign = TextAlign.Center
                         )
                     }
                 }
             }
         }
+    }
+
+    private fun getDeviceIpAddress(): String {
+        try {
+            val interfaces = NetworkInterface.getNetworkInterfaces() ?: return "Unavailable"
+            for (intf in interfaces) {
+                val addrs = intf.inetAddresses
+                for (addr in addrs) {
+                    if (!addr.isLoopbackAddress && addr is Inet4Address) {
+                        val ip = addr.hostAddress
+                        if (ip != null && !ip.startsWith("127.")) {
+                            return ip
+                        }
+                    }
+                }
+            }
+        } catch (_: Exception) {
+        }
+        return "Unavailable"
     }
 }

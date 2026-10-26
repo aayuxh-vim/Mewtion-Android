@@ -48,6 +48,15 @@ class SensorBridgeService : Service(), SensorEventListener {
         startServer()
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        return START_NOT_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        stopSelf()
+    }
+
     private fun startAsForeground() {
         val channelId = "sensor_bridge_channel"
         val channelName = "Sensor Bridge Service"
@@ -120,6 +129,7 @@ class SensorBridgeService : Service(), SensorEventListener {
         isRunning = false
         sensorManager.unregisterListener(this)
         try { serverSocket?.close() } catch (_: Exception) {}
+        stopForeground(STOP_FOREGROUND_REMOVE)
         super.onDestroy()
     }
 
